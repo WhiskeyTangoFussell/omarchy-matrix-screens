@@ -46,13 +46,102 @@ Item {
 
   // ------------------------------------------------------------- settings
 
-  readonly property var userSettings: Settings.pluginEntry(shell ? shell.shellConfig : null, pluginId)
+  // Every setting lives in the plugin's own file; shell.json only holds the
+  // plugin's bare { id } entry, which enables it.
+  readonly property string settingsDir: home + "/.config/omarchy/matrix-screens"
+  readonly property string settingsPath: settingsDir + "/settings.json"
+  property var userSettings: ({})
+  property bool settingsReadable: true
+  // No settings.json yet: a migration from shell.json may still be due.
+  property bool settingsMissing: false
 
-  // Saves one setting in the plugin's shell.json entry; the shell reloads it.
+  // Saves one setting (undefined removes it). The change applies at once;
+  // the file is written behind it.
   function setSetting(key, value) {
-    if (!shell || typeof shell.mutateShellConfig !== "function") return
-    var id = root.pluginId
-    shell.mutateShellConfig(function (config) { Settings.setPluginSetting(config, id, key, value) })
+    if (!root.settingsReadable) {
+      console.warn("matrix-screens: " + root.settingsPath + " is not valid JSON; not overwriting it")
+      return
+    }
+    root.userSettings = Settings.withSetting(root.userSettings, key, value)
+    writeSettings()
+  }
+
+  function writeSettings() {
+    if (settingsWriter.running) {
+      settingsWriter.again = true
+      return
+    }
+    settingsWriter.command = ["bash", "-c",
+      "mkdir -p \"$(dirname \"$1\")\" && printf '%s\\n' \"$2\" >\"$1.tmp\" && mv -f \"$1.tmp\" \"$1\"",
+      "matrix-screens", root.settingsPath, JSON.stringify(root.userSettings, null, 2)]
+    settingsWriter.running = true
+  }
+
+  Process {
+    id: settingsWriter
+    property bool again: false
+    onExited: if (again) {
+      again = false
+      root.writeSettings()
+    }
+  }
+
+  FileView {
+    id: settingsFile
+    path: root.settingsPath
+    watchChanges: true
+    printErrors: false
+    onFileChanged: reload()
+    onLoaded: {
+      try {
+        var parsed = JSON.parse(text())
+        root.userSettings = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : ({})
+        root.settingsReadable = true
+        root.settingsMissing = false
+      } catch (e) {
+        // Leave a hand-edited file with a typo alone until it's fixed.
+        console.warn("matrix-screens: can't read " + root.settingsPath + ": " + e)
+        root.settingsReadable = false
+      }
+    }
+    onLoadFailed: {
+      root.userSettings = ({})
+      root.settingsReadable = true
+      root.settingsMissing = true
+      root.migrateLegacySettings()
+    }
+  }
+
+  // A settings file that didn't exist yet isn't watched; notice it appear.
+  FileView {
+    path: root.settingsDir
+    watchChanges: true
+    printErrors: false
+    onFileChanged: settingsFile.reload()
+  }
+
+  // Versions before 0.3.0 kept settings in the plugin's shell.json entry:
+  // move them into settings.json and strip the entry back to its id.
+  function migrateLegacySettings() {
+    var legacy = Settings.legacySettings(Settings.pluginEntry(shell ? shell.shellConfig : null, root.pluginId))
+    if (!legacy) return
+    root.settingsMissing = false
+    var merged = legacy
+    for (var k in root.userSettings) merged[k] = root.userSettings[k]
+    root.userSettings = merged
+    writeSettings()
+    if (shell && typeof shell.mutateShellConfig === "function") {
+      var id = root.pluginId
+      shell.mutateShellConfig(function (config) { Settings.stripPluginEntry(config, id) })
+    }
+    console.log("matrix-screens: moved settings from shell.json to " + root.settingsPath)
+  }
+
+  // shell.json may load after the missing settings file is noticed.
+  Connections {
+    target: root.shell
+    ignoreUnknownSignals: true
+    function onShellConfigChanged() { if (root.settingsMissing) root.migrateLegacySettings() }
   }
 
   ThemeSource {

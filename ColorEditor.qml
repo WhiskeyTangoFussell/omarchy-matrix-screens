@@ -32,7 +32,7 @@ Column {
   property real val: 1
 
   // Speed and typeface: shared by every theme, saved in the plugin's
-  // shell.json entry. update_delay is ms per step / 10; "" = Omarchy's font.
+  // settings.json. update_delay is ms per step / 10; "" = Omarchy's font.
   property real draftDelay: 9.375
   property real savedDelay: 9.375
   property string draftFont: ""
@@ -189,12 +189,12 @@ Column {
 
   // Colors go to this theme's palette file (only when they changed, so a
   // speed or font change doesn't freeze the theme's colors); speed and font
-  // to the plugin's shell.json entry, for every theme. The same speed on
+  // to the plugin's settings.json, for every theme. The same speed on
   // battery, so the rain doesn't change pace when unplugged.
   // ---- per section --------------------------------------------------------
   //
   // Text & display (typeface, size, fade, hue shift, speed) is saved in the
-  // plugin's shell.json entry and applies to every theme. The color palette
+  // plugin's settings.json and applies to every theme. The color palette
   // is saved in this theme's custom palette file.
 
   function writeColors(d) {
@@ -278,7 +278,7 @@ Column {
   }
 
   readonly property bool hasCustom: !!rain && rain.paletteSource === "custom"
-  // Speed or font set in shell.json (the defaults live in the plugin).
+  // Speed or font set in settings.json (the defaults live in the plugin).
   readonly property bool hasCustomSettings: !!rain && !!rain.userSettings
     && (rain.userSettings.update_delay !== undefined || rain.userSettings.battery_update_delay !== undefined
       || rain.userSettings.font_family !== undefined || rain.userSettings.font_size !== undefined

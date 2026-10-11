@@ -10,8 +10,8 @@ PLUGIN_ID="io.github.whiskeytangofussell.matrixscreens"
 PLUGIN_DIR=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)
 FONT="$PLUGIN_DIR/fonts/CaskaydiaCoveNerdFontMono-Bold.ttf"
 CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
-SHELL_JSON="$CONFIG_HOME/omarchy/shell.json"
 CUSTOM_DIR="$CONFIG_HOME/omarchy/matrix-screens"
+SETTINGS="$CUSTOM_DIR/settings.json"
 BACKGROUNDS_DIR="$CONFIG_HOME/omarchy/backgrounds"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/matrix-screens"
 TILE_NAME="matrix-screens.png"
@@ -22,22 +22,20 @@ die() { echo "matrix-screens: $*" >&2; exit 1; }
 
 current_theme() { cat "$HOME/.local/state/omarchy/current/theme.name" 2>/dev/null || true; }
 
-# ---- settings in shell.json -------------------------------------------------
+# ---- settings ---------------------------------------------------------------
 
-# Sets one key in the plugin's shell.json entry (atomically) and has the shell
-# reload it. The plugin must be enabled, so the entry exists.
+# Sets one key in ~/.config/omarchy/matrix-screens/settings.json (atomically);
+# the running plugin picks the change up from the file.
 set_setting() {
-  local key=$1 json_value=$2
-  [[ -f $SHELL_JSON ]] || die "$SHELL_JSON not found"
-  jq -e --arg id "$PLUGIN_ID" '[.. | objects | select(.id? == $id)] | length > 0' "$SHELL_JSON" >/dev/null \
-    || die "the plugin is not enabled (omarchy plugin enable $PLUGIN_ID)"
-  local tmp
-  tmp=$(mktemp "$SHELL_JSON.XXXXXX")
-  jq --arg id "$PLUGIN_ID" --arg key "$key" --argjson value "$json_value" \
-    '(.. | objects | select(.id? == $id)) |= (.[$key] = $value)' "$SHELL_JSON" >"$tmp" || { rm -f "$tmp"; die "could not update $SHELL_JSON"; }
-  chmod --reference="$SHELL_JSON" "$tmp"
-  mv -f "$tmp" "$SHELL_JSON"
-  omarchy-shell -q shell reloadConfig >/dev/null 2>&1 || true
+  local key=$1 json_value=$2 tmp current='{}'
+  mkdir -p "$CUSTOM_DIR"
+  if [[ -f $SETTINGS ]]; then
+    jq -e 'type == "object"' "$SETTINGS" >/dev/null 2>&1 || die "$SETTINGS is not a JSON object; fix it first"
+    current=$(cat "$SETTINGS")
+  fi
+  tmp=$(mktemp "$SETTINGS.XXXXXX")
+  jq --arg key "$key" --argjson value "$json_value" '.[$key] = $value' <<<"$current" >"$tmp" || { rm -f "$tmp"; die "could not update $SETTINGS"; }
+  mv -f "$tmp" "$SETTINGS"
 }
 
 # ---- tiles ------------------------------------------------------------------
@@ -157,7 +155,7 @@ running() { [[ -n $(ipc status) ]] || die "Matrix Screens is not running (omarch
 feature_state() { ipc status | jq -r "if .$1 then \"on\" else \"off\" end"; }
 
 # <feature> on|off|toggle|status, where feature is background, screensaver
-# or lock. The shell saves the choice in shell.json.
+# or lock. The plugin saves the choice in settings.json.
 cmd_feature() {
   local name=$1 field=$2 sub=${3:-status}
   running

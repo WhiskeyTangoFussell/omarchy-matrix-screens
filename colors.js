@@ -6,7 +6,7 @@
 
 var MAX_COLORS = 12
 // What a saved palette file holds: colors only. Fade, hue shift, speed and
-// the font are display settings, saved in shell.json.
+// the font are display settings, saved in settings.json.
 var COLOR_KEYS = ["color", "head_color", "tail_colors", "background_color"]
 
 function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)) }

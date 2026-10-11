@@ -1,6 +1,6 @@
 .pragma library
 
-// Matrix Screens settings: how the plugin's shell.json entry, the active
+// Matrix Screens settings: how the plugin's settings.json, the active
 // palette file and the built-in defaults combine, and how color names map
 // onto the active theme's colors.toml. Pure JS so `node --test` covers it.
 //
@@ -11,7 +11,7 @@
 // columns spread edge to edge, tails fading halfway toward the background
 // while drifting through the next six tail colors.
 //
-// Only your own settings change these: the plugin's shell.json entry and
+// Only your own settings change these: the plugin's settings.json and
 // your custom palette file. Theme and bundled palettes supply colors only.
 var DEFAULTS = {
   update_delay: 8.333,
@@ -84,7 +84,7 @@ function lookup(source, key) {
   return undefined
 }
 
-// Precedence: shell.json plugin entry > palette file > defaults (THEME_COLORS
+// Precedence: settings.json > palette file > defaults (THEME_COLORS
 // for colors when there is no palette file, PLAIN_COLORS when there is).
 // A palette file supplies only colors, unless it is your own custom file
 // (paletteSource "custom"), which can set anything. Both sources accept
@@ -345,4 +345,38 @@ function setPluginSetting(config, id, key, value) {
     }
   }
   return false
+}
+
+// ---- the plugin's own settings file ------------------------------------------
+//
+// ~/.config/omarchy/matrix-screens/settings.json holds every setting; the
+// plugin's shell.json entry is only its bare { id } (which enables it).
+
+// A copy of the settings object with one key set; undefined removes it.
+function withSetting(settings, key, value) {
+  var out = {}
+  for (var k in settings || {}) out[k] = settings[k]
+  if (value === undefined) delete out[key]
+  else out[key] = value
+  return out
+}
+
+// Settings left in a shell.json plugin entry by older versions (everything
+// but the id), to move into settings.json.
+function legacySettings(entry) {
+  var out = {}
+  var any = false
+  for (var k in entry || {}) {
+    if (k === "id") continue
+    out[k] = entry[k]
+    any = true
+  }
+  return any ? out : null
+}
+
+// Strips the plugin's shell.json entry back to its id, in place (for
+// shell.mutateShellConfig).
+function stripPluginEntry(config, id) {
+  var entry = pluginEntry(config, id)
+  for (var k in entry) if (k !== "id") delete entry[k]
 }

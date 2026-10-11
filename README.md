@@ -60,7 +60,7 @@ Each theme gets its own rain tile, drawn by the plugin. If the rain is on when y
 
 The panel has two collapsible sections. Each header has **save**, **undo** and **reset** icons that act on that section only; they turn red while it has unsaved changes. Unsaved changes are dropped when the panel closes.
 
-- **Customize Text & Display**: typeface, size (8–32 px), tail fade, hue shift and speed. Saved in the plugin's settings and used for **every theme**. Reset returns to the defaults: Caskaydia Cove at Omarchy's size, fade 0.50, hue shift 6, 12 steps per second.
+- **Customize Text & Display**: typeface, size (8–32 px), tail fade, hue shift and speed. Saved in `settings.json` (below) and used for **every theme**. Reset returns to the defaults: Caskaydia Cove at Omarchy's size, fade 0.50, hue shift 6, 12 steps per second.
 - **Modify Color Palette**: click a swatch (head, background or a tail color), then pick a color, type a hex value or click one of the theme's colors. Tail colors come in hue groups (each stream uses one group): **+** adds a shade, *Add group* adds a hue, right-click removes a color, up to 12 in all. Saved for **this theme only**, in `~/.config/omarchy/matrix-screens/<theme>.toml`. Reset deletes that file. *Manually Edit Color Configuration* opens it in your editor.
 
 ### Where colors come from
@@ -83,7 +83,7 @@ background_color = "background"
 
 ## Settings
 
-Everything is stored in the plugin's entry in `~/.config/omarchy/shell.json`; the panel writes most of it. You can also edit it by hand (either key style works):
+Settings live in the plugin's own file, `~/.config/omarchy/matrix-screens/settings.json`, next to your color files; Omarchy's `shell.json` only holds the plugin's bare entry. The panel writes most of them, and the plugin picks up hand edits as soon as you save (either key style works). Versions before 0.3.0 kept settings in `shell.json`; they're moved over automatically.
 
 | Key | Default | |
 |---|---|---|

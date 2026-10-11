@@ -171,3 +171,17 @@ test("setting a key to undefined removes it from the entry", () => {
   S.setPluginSetting(config, id, "update_delay", undefined)
   assert.deepEqual(Object.keys(config.bar.layout.right[0]).sort(), ["font_family", "id"])
 })
+
+test("settings.json helpers: set/remove keys, migrate a legacy shell.json entry", () => {
+  const id = "io.github.whiskeytangofussell.matrixscreens"
+  const a = { screensaver: true }
+  const b = S.withSetting(a, "font_size", 18)
+  assert.deepEqual(plain(a), { screensaver: true })        // not mutated
+  assert.deepEqual(plain(b), { screensaver: true, font_size: 18 })
+  assert.deepEqual(plain(S.withSetting(b, "screensaver", undefined)), { font_size: 18 })
+  const config = { bar: { layout: { right: [{ id, screensaver: true, lock_screen: false }] } } }
+  assert.deepEqual(plain(S.legacySettings(S.pluginEntry(config, id))), { screensaver: true, lock_screen: false })
+  S.stripPluginEntry(config, id)
+  assert.deepEqual(plain(config.bar.layout.right[0]), { id })
+  assert.equal(S.legacySettings(S.pluginEntry(config, id)), null)
+})
