@@ -2,7 +2,7 @@
 
 Matrix digital rain as your desktop background, your screensaver and your lock screen, in your theme's colors. A bar icon switches each one on or off.
 
-![Matrix Screens on the Ethereal theme](preview.png)
+![Matrix Screens on Tokyo Night: the rain as the desktop background, with the bar panel open](preview.png)
 
 ## What it does
 
@@ -16,6 +16,29 @@ Matrix digital rain as your desktop background, your screensaver and your lock s
 - **Your own colors.** A palette file in `~/.config/omarchy/matrix-screens/<theme>.toml` wins over everything else (see [Colors](#colors)).
 - **Font included.** The rain uses the bundled Caskaydia Cove Nerd Font Mono, so it looks the same whatever fonts you have installed.
 - **Light on power.** The background rain stops whenever nobody can see it: behind a fullscreen window, under the lock or the screensaver, or when another wallpaper is selected. All the rain slows down on battery.
+
+## Screenshots
+
+The rain full screen and behind the lock screen, in three themes:
+
+| Tokyo Night | Osaka Jade | Retro-82 |
+|---|---|---|
+| ![Rain on Tokyo Night](screenshots/rain-tokyo-night.png) | ![Rain on Osaka Jade](screenshots/rain-osaka-jade.png) | ![Rain on Retro-82](screenshots/rain-retro-82.png) |
+| ![Lock screen on Tokyo Night](screenshots/lock-tokyo-night.png) | ![Lock screen on Osaka Jade](screenshots/lock-osaka-jade.png) | ![Lock screen on Retro-82](screenshots/lock-retro-82.png) |
+
+Tokyo Night and Retro-82 use the bundled palettes; Osaka Jade has none, so it uses the theme's own colors.
+
+The bar icon and its panel:
+
+| | |
+|---|---|
+| ![The matrix icon in the bar](screenshots/01-bar-icon.png) | The matrix icon in the bar (underlined while its panel is open). |
+| ![The panel](screenshots/02-panel.png) | The panel: live preview (click it for the full-screen screensaver), and the Background, Screensaver and Lock Screen switches. |
+| ![Customize Text & Display](screenshots/03-panel-text-and-display.png) | **Customize Text & Display**: typeface, size, tail fade, hue shift and speed. |
+| ![Typeface dropdown](screenshots/04-panel-typeface-dropdown.png) | The typeface dropdown, with a search box. |
+| ![Unsaved changes](screenshots/05-panel-unsaved-changes.png) | Unsaved changes turn the section's save, undo and reset icons red; the preview shows the draft. |
+| ![Modify Color Palette](screenshots/06-panel-color-palette.png) | **Modify Color Palette**: head and background, tail color groups, and the color picker. |
+| ![Bottom of Modify Color Palette](screenshots/07-panel-color-palette-bottom.png) | Scrolled down: the preview stays pinned; the theme's colors as quick picks, and Manually Edit Color Configuration. |
 
 ## The lock screen
 
