@@ -1,7 +1,7 @@
 # Matrix Screens palette: vantablack
 #
-# Bundled with the plugin. To change it, copy this file to
-# ~/.config/omarchy/matrix-screens/vantablack.toml and edit the copy; that file wins.
+# Bundled with the plugin. To change it, use Modify Color Palette in the bar panel;
+# it saves ~/.config/omarchy/matrix-screens/vantablack.toml, which wins over this file.
 # Rain background: the theme's own background (#000000); set background_color to change it.
 
 color = "green"

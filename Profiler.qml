@@ -1,8 +1,8 @@
 import QtQuick
 
 // Per-tick timing for the renderer. Off by default; when enabled it folds
-// every `window` ticks into `summary` (and logs it), so Preview.qml can show
-// live numbers without touching the hot path when disabled.
+// every `window` ticks into `summary` and logs it (MatrixScreen's `profile`
+// property), without touching the hot path when disabled.
 QtObject {
   id: profiler
 

@@ -22,8 +22,8 @@ import "cmatrix.js" as CMatrix
 //                  reads its state and samples the atlas. The full-screen
 //                  draw costs the same whether one cell changed or all did.
 //
-// Nothing here depends on the Omarchy shell, so `quickshell -p Preview.qml`
-// runs it in a plain window.
+// Nothing here depends on the Omarchy shell; RainView.qml binds it to the
+// plugin's settings.
 Item {
   id: root
 
