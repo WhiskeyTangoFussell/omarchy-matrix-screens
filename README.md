@@ -14,11 +14,9 @@ Matrix digital rain as your desktop background, screensaver and lock screen, in 
 
 ## Screenshots
 
-| Tokyo Night | Osaka Jade | Retro-82 |
+| Tokyo Night | Spectrum | Retro-82 |
 |---|---|---|
-| ![Rain on Tokyo Night](screenshots/rain-tokyo-night.png) | ![Rain on Osaka Jade](screenshots/rain-osaka-jade.png) | ![Rain on Retro-82](screenshots/rain-retro-82.png) |
-
-Osaka Jade has no bundled palette, so it uses the theme's own colors.
+| ![Rain on Tokyo Night](screenshots/rain-tokyo-night.png) | ![Rain on Spectrum](screenshots/rain-spectrum.png) | ![Rain on Retro-82](screenshots/rain-retro-82.png) |
 
 ![The lock screen on Tokyo Night](screenshots/lock-tokyo-night.png)
 
