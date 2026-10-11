@@ -1,0 +1,11 @@
+# Matrix Screens palette: hackerman
+#
+# Bundled with the plugin. To change it, copy this file to
+# ~/.config/omarchy/matrix-screens/hackerman.toml and edit the copy; that file wins.
+# Rain background: the theme's own background (#0B0C16); set background_color to change it.
+
+color = "green"
+head_color = "#ddf7ff"
+
+#              green                     | blue                      | teal
+tail_colors = "#9cf7c2, #4fe88f, #26a269 | #c4d2ed, #829dd4, #4a64a0 | #a4ffec, #50f7d4, #1f9e88"

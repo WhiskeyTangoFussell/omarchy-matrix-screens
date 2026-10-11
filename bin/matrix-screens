@@ -1,0 +1,297 @@
+#!/bin/bash
+# matrix-screens: the command-line half of the Matrix Screens plugin.
+#
+# The background, screensaver and lock screen themselves run inside the
+# Omarchy shell (Rain.qml, Service.qml); this script talks to them over IPC,
+# edits settings and draws the background-switcher tiles.
+set -euo pipefail
+
+PLUGIN_ID="io.github.whiskeytangofussell.matrixscreens"
+PLUGIN_DIR=$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)
+FONT="$PLUGIN_DIR/fonts/CaskaydiaCoveNerdFontMono-Bold.ttf"
+CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
+SHELL_JSON="$CONFIG_HOME/omarchy/shell.json"
+CUSTOM_DIR="$CONFIG_HOME/omarchy/matrix-screens"
+BACKGROUNDS_DIR="$CONFIG_HOME/omarchy/backgrounds"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/matrix-screens"
+TILE_NAME="matrix-screens.png"
+# Bump when the tile drawing changes, so existing tiles are redrawn.
+TILE_VERSION=1
+
+die() { echo "matrix-screens: $*" >&2; exit 1; }
+
+current_theme() { cat "$HOME/.local/state/omarchy/current/theme.name" 2>/dev/null || true; }
+
+# ---- settings in shell.json -------------------------------------------------
+
+# Sets one key in the plugin's shell.json entry (atomically) and has the shell
+# reload it. The plugin must be enabled, so the entry exists.
+set_setting() {
+  local key=$1 json_value=$2
+  [[ -f $SHELL_JSON ]] || die "$SHELL_JSON not found"
+  jq -e --arg id "$PLUGIN_ID" '[.. | objects | select(.id? == $id)] | length > 0' "$SHELL_JSON" >/dev/null \
+    || die "the plugin is not enabled (omarchy plugin enable $PLUGIN_ID)"
+  local tmp
+  tmp=$(mktemp "$SHELL_JSON.XXXXXX")
+  jq --arg id "$PLUGIN_ID" --arg key "$key" --argjson value "$json_value" \
+    '(.. | objects | select(.id? == $id)) |= (.[$key] = $value)' "$SHELL_JSON" >"$tmp" || { rm -f "$tmp"; die "could not update $SHELL_JSON"; }
+  chmod --reference="$SHELL_JSON" "$tmp"
+  mv -f "$tmp" "$SHELL_JSON"
+  omarchy-shell -q shell reloadConfig >/dev/null 2>&1 || true
+}
+
+# ---- tiles ------------------------------------------------------------------
+
+# The largest connected monitor, in pixels; the tile is drawn at that size.
+tile_size() {
+  local size
+  size=$(hyprctl monitors -j 2>/dev/null | jq -r 'max_by(.width * .height) | "\(.width)x\(.height)"' 2>/dev/null || true)
+  [[ $size =~ ^[0-9]+x[0-9]+$ ]] && echo "$size" || echo "2560x1664"
+}
+
+# Draws a still frame of the rain (seeded, so the same colors always give
+# the same image).
+#   draw_tile <out.png> <WxH> <background> <groups "a b c|d e"> <head> <fade 0..1> <hue shift>
+draw_tile() {
+  local out=$1 size=$2 bg=$3 groups=$4 head=$5 fade=$6 shift=$7
+  local w=${size%x*} h=${size#*x} mvg
+  command -v magick >/dev/null || die "drawing tiles needs ImageMagick (omarchy pkg add imagemagick)"
+  mvg=$(mktemp --suffix=.mvg)
+  # shellcheck disable=SC2064
+  trap "rm -f '$mvg'" RETURN
+
+  awk -v G="$groups" -v HEAD="$head" -v BG="$bg" -v FADE="$fade" -v SHIFT="$shift" -v W="$w" -v H="$h" -v CW=17 -v CH=28 '
+function hex2(h, i) { return index("0123456789abcdef", tolower(substr(h, i, 1))) * 16 - 16 + index("0123456789abcdef", tolower(substr(h, i + 1, 1))) - 1 }
+function mixc(a, c, k,   r, g, b) {
+  # k = 1 gives c, k = 0 gives a
+  r = hex2(a, 2) + (hex2(c, 2) - hex2(a, 2)) * k
+  g = hex2(a, 4) + (hex2(c, 4) - hex2(a, 4)) * k
+  b = hex2(a, 6) + (hex2(c, 6) - hex2(a, 6)) * k
+  return sprintf("#%02x%02x%02x", r + 0.5, g + 0.5, b + 0.5)
+}
+BEGIN {
+  srand(7)
+  ng = split(G, groups, "|")
+  # Flat color list (all shades in order) and the first index of each group in it.
+  nflat = 0
+  for (gi = 1; gi <= ng; gi++) {
+    gstart[gi] = nflat
+    m = split(groups[gi], tmp, " ")
+    for (q = 1; q <= m; q++) flat[nflat++] = tmp[q]
+  }
+  chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$+-*/=%#&<>[]{}():;.,!?"
+  n = length(chars)
+  print "viewbox 0 0 " W " " H
+  print "font-size 24"
+  rows = int(H / CH)
+  for (x = 4; x < W; x += CW * 2) {
+    gsel = int(rand() * ng) + 1
+    ns = split(groups[gsel], shades, " ")
+    streams = int(rand() * 2) + 1
+    for (s = 0; s < streams; s++) {
+      if (rand() < 0.25) continue
+      head = int(rand() * (rows + 10))
+      len = int(rand() * 25) + 6
+      for (r = head - len; r <= head; r++) {
+        if (r < 0 || r >= rows) continue
+        c = substr(chars, int(rand() * n) + 1, 1)
+        color = (r == head) ? HEAD : shades[int(rand() * ns) + 1]
+        tpos = (head - r - 1) / (len > 1 ? len - 1 : 1)
+        if (r != head && SHIFT > 0) {
+          pos = gstart[gsel] + tpos * SHIFT
+          step = int(pos)
+          color = mixc(flat[step % nflat], flat[(step + 1) % nflat], pos - step)
+        }
+        if (r != head && FADE > 0) color = mixc(BG, color, 1 - FADE * tpos)
+        printf "fill \"%s\" text %d,%d \"%s\"\n", color, x, (r + 1) * CH, c
+      }
+    }
+  }
+}' >"$mvg"
+
+  magick -size "$size" xc:"$bg" -font "$FONT" -draw "@$mvg" -strip "$out"
+}
+
+# tile <theme> <background> <groups> <head> <fade> <hue shift> [--select]
+# Writes the theme's rain tile into its user backgrounds folder, where the
+# background switcher lists it. Redrawn only when the colors change. A theme
+# that already has an omatrix.png tile keeps it. --select also makes the
+# tile the current background.
+cmd_tile() {
+  local select=0 args=()
+  for a in "$@"; do
+    [[ $a == --select ]] && select=1 || args+=("$a")
+  done
+  ((${#args[@]} == 6)) || die "usage: matrix-screens tile <theme> <background> <groups> <head> <fade> <hue shift> [--select]"
+  local theme=${args[0]} bg=${args[1]} groups=${args[2]} head=${args[3]} fade=${args[4]} shift=${args[5]}
+  [[ $theme =~ ^[A-Za-z0-9._-]+$ ]] || die "bad theme name: $theme"
+  local dir="$BACKGROUNDS_DIR/$theme" tile
+
+  if [[ -f $dir/omatrix.png ]]; then
+    tile="$dir/omatrix.png"
+  else
+    tile="$dir/$TILE_NAME"
+    local size key stamp="$STATE_DIR/tiles/$theme"
+    size=$(tile_size)
+    key="v$TILE_VERSION $size $bg $groups $head $fade $shift"
+    if [[ ! -f $tile || $(cat "$stamp" 2>/dev/null) != "$key" ]]; then
+      mkdir -p "$dir" "$STATE_DIR/tiles"
+      draw_tile "$tile.tmp.png" "$size" "$bg" "$groups" "$head" "$fade" "$shift"
+      mv -f "$tile.tmp.png" "$tile"
+      echo "$key" >"$stamp"
+      echo "wrote $tile"
+    fi
+  fi
+
+  if ((select)); then
+    omarchy-theme-bg-set "$tile"
+  fi
+}
+
+# ---- features -------------------------------------------------------------
+
+ipc() { omarchy-shell matrixscreens "$@" 2>/dev/null; }
+
+running() { [[ -n $(ipc status) ]] || die "Matrix Screens is not running (omarchy plugin enable $PLUGIN_ID)"; }
+
+feature_state() { ipc status | jq -r "if .$1 then \"on\" else \"off\" end"; }
+
+# <feature> on|off|toggle|status, where feature is background, screensaver
+# or lock. The shell saves the choice in shell.json.
+cmd_feature() {
+  local name=$1 field=$2 sub=${3:-status}
+  running
+  case $sub in
+  on | off) ipc set "$name" "$sub" >/dev/null ;;
+  toggle) ipc set "$name" "$([[ $(feature_state "$field") == on ]] && echo off || echo on)" >/dev/null ;;
+  status) ;;
+  *) die "usage: matrix-screens $name on|off|toggle|status" ;;
+  esac
+  # The shell applies the change asynchronously.
+  [[ $sub == status ]] || sleep 1.5
+  echo "$name: $(feature_state "$field")"
+}
+
+cmd_screensaver() {
+  case ${1:-status} in
+  launch | start) running; ipc screensaver ;;
+  stop) running; ipc stopScreensaver ;;
+  *) cmd_feature screensaver screensaver "$@" ;;
+  esac
+}
+
+# ---- palettes ---------------------------------------------------------------
+
+# customize [theme]: copy the palette in use into your custom folder (or start
+# one from the theme's colors) and print its path. Your copy wins from then on.
+cmd_customize() {
+  local theme=${1:-$(current_theme)}
+  [[ $theme =~ ^[A-Za-z0-9._-]+$ ]] || die "no theme given and no active theme"
+  local out="$CUSTOM_DIR/$theme.toml" src=""
+  if [[ -f $out ]]; then
+    echo "$out"
+    return
+  fi
+  mkdir -p "$CUSTOM_DIR"
+  if [[ $theme == "$(current_theme)" ]]; then
+    for f in "$HOME/.local/state/omarchy/current/theme/matrix-screens.toml" "$HOME/.local/state/omarchy/current/theme/omatrix.toml"; do
+      [[ -f $f ]] && { src=$f; break; }
+    done
+  fi
+  [[ -z $src && -f $PLUGIN_DIR/palettes/$theme.toml ]] && src="$PLUGIN_DIR/palettes/$theme.toml"
+
+  if [[ -n $src ]]; then
+    {
+      echo "# Matrix Screens: your colors for $theme (copied from $src)."
+      echo "# This file wins over the theme's and the bundled palette. Delete it to go back."
+      echo
+      # Colors only: a theme's other settings don't carry over.
+      grep -E '^\s*#\s{4,}|^(color|head_color|tail_colors|background_color)\s*=' "$src"
+      echo
+      echo "# Uncomment to change the defaults for this theme."
+      echo "# tail_fade = 0.5        # 0..1: how far each tail dims toward the background"
+      echo "# tail_hue_shift = 6     # how many tail colors each stream sweeps through"
+    } >"$out"
+  else
+    cat >"$out" <<EOF
+# Matrix Screens: your colors for $theme.
+# This file wins over the theme's and the bundled palette. Delete it to go back.
+#
+# Colors are #rrggbb or any colors.toml name (accent, foreground, green,
+# bright_cyan, ...). These lines start out as the theme-color defaults.
+
+head_color = "foreground"
+color = "accent"
+
+# Hue groups separated by "|", shades within a group by ","; up to 12 in all.
+tail_colors = "accent | bright_green, green | bright_cyan, cyan"
+
+# 0..1: how far each tail dims toward the background behind its head.
+tail_fade = 0.5
+
+# How many tail colors each stream sweeps through, head to tail (0 = off).
+tail_hue_shift = 6
+
+# background_color = "background"
+EOF
+  fi
+  echo "$out"
+}
+
+# ---- status -----------------------------------------------------------------
+
+cmd_status() {
+  local json
+  if ! json=$(omarchy-shell matrixscreens status 2>/dev/null) || [[ -z $json ]]; then
+    echo "Matrix Screens is not running (enable it: omarchy plugin enable $PLUGIN_ID)"
+    return 1
+  fi
+  if [[ ${1:-} == --json ]]; then
+    echo "$json"
+    return
+  fi
+  jq -r '
+    "Theme:       \(.theme)",
+    "Palette:     \(.paletteSource)\(if .palettePath != "" then " (\(.palettePath))" else "" end)",
+    "Background:  \(if .backgroundOn then "on" else "off" end) (mode \(.backgroundMode)\(if .tileSelected then ", rain tile selected" else "" end))",
+    "Screensaver: \(if .screensaver then "on" else "off" end)\(if .screensaver and .screensaverToggledOff then " (but Omarchy'"'"'s screensaver switch is off)" else "" end)",
+    "Lock screen: \(if .lockScreen then "on" else "off" end)",
+    "Font:        \(.fontFamily) \(.fontPixelSize)px\(if .bundledFont != "" then " (bundled font loaded)" else "" end)",
+    "Speed:       one step every \(.intervalMs) ms"' <<<"$json"
+}
+
+usage() {
+  cat <<EOF
+Usage: matrix-screens <command>
+
+  status [--json]                        what's on, and which palette is in use
+  background on|off|toggle|status        the rain as the desktop background
+  screensaver on|off|toggle|status       the rain as the idle screensaver
+  lock on|off|toggle|status              the rain behind the lock screen
+  screensaver launch                     start the screensaver now
+  screensaver stop                       close it
+  background-mode tile|always|off        when the background rain shows
+  colors                                 open the panel at Modify Color Palette
+  customize [theme]                      make your own copy of a theme's colors and print its path
+  tile <theme> <bg> <groups> <head> <fade> <shift> [--select]
+                                         draw a background-switcher tile (the plugin runs this)
+EOF
+}
+
+case ${1:-help} in
+status) shift; cmd_status "$@" ;;
+customize) shift; cmd_customize "$@" ;;
+colors) running; ipc colors ;;
+background) shift; cmd_feature background backgroundOn "$@" ;;
+screensaver) shift; cmd_screensaver "$@" ;;
+lock) shift; cmd_feature lock lockScreen "$@" ;;
+background-mode)
+  case ${2:-} in
+  tile | always | off) set_setting background "\"$2\""; echo "background mode: $2" ;;
+  *) die "usage: matrix-screens background-mode tile|always|off" ;;
+  esac
+  ;;
+tile) shift; cmd_tile "$@" ;;
+help | -h | --help) usage ;;
+*) usage >&2; exit 1 ;;
+esac

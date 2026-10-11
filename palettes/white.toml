@@ -1,0 +1,11 @@
+# Matrix Screens palette: white
+#
+# Bundled with the plugin. To change it, copy this file to
+# ~/.config/omarchy/matrix-screens/white.toml and edit the copy; that file wins.
+# Rain background: the theme's own background (#ffffff); set background_color to change it.
+
+color = "green"
+head_color = "#000000"
+
+#              black to mid grey, 8 shades
+tail_colors = "#000000, #1c1c1c, #333333, #4a4a4a, #616161, #787878, #8f8f8f, #a6a6a6"

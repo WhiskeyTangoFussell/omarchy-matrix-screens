@@ -1,0 +1,11 @@
+# Matrix Screens palette: spectrum
+#
+# Bundled with the plugin. To change it, copy this file to
+# ~/.config/omarchy/matrix-screens/spectrum.toml and edit the copy; that file wins.
+# Rain background: the theme's own background (#0b0b12); set background_color to change it.
+
+color = "green"
+head_color = "#ffffff"
+
+#              red     | orange  | amber   | yellow  | lime    | green   | aqua    | cyan    | azure   | blue    | violet  | magenta
+tail_colors = "#ff1f3d | #ff7a00 | #ffb000 | #ffee00 | #9dff00 | #00ff4c | #00ffb3 | #00e5ff | #0091ff | #3d4dff | #9b3dff | #ff2bd6"

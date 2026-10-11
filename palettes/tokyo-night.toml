@@ -1,0 +1,11 @@
+# Matrix Screens palette: tokyo-night
+#
+# Bundled with the plugin. To change it, copy this file to
+# ~/.config/omarchy/matrix-screens/tokyo-night.toml and edit the copy; that file wins.
+# Rain background: the theme's own background (#1a1b26); set background_color to change it.
+
+color = "green"
+head_color = "#ffffff"
+
+#              pink                      | purple                    | blue
+tail_colors = "#ff8fd8, #ff2fb9, #b8007f | #d59bff, #b14dff, #7400d6 | #8fd8ff, #1fb4ff, #0062d1"

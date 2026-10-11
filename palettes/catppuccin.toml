@@ -1,0 +1,11 @@
+# Matrix Screens palette: catppuccin
+#
+# Bundled with the plugin. To change it, copy this file to
+# ~/.config/omarchy/matrix-screens/catppuccin.toml and edit the copy; that file wins.
+# Rain background: the theme's own background (#1e1e2e); set background_color to change it.
+
+color = "green"
+head_color = "#cdd6f4"
+
+#              pink                      | lavender                  | grayish blue              | teal
+tail_colors = "#f5c2e7, #eb9ad4, #d65fb4 | #c6ccff, #b4befe, #7287fd | #8fb3cf, #7298bf, #56789f | #94e2d5, #5fc4b8, #179299"

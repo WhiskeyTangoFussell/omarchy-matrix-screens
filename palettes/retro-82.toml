@@ -1,0 +1,11 @@
+# Matrix Screens palette: retro-82
+#
+# Bundled with the plugin. To change it, copy this file to
+# ~/.config/omarchy/matrix-screens/retro-82.toml and edit the copy; that file wins.
+# Rain background: the theme's own background (#05182e); set background_color to change it.
+
+color = "green"
+head_color = "#f6dcac"
+
+#              yellow to orange (6)                                  | green to teal (6)
+tail_colors = "#ffe9a0, #ffd75f, #fbbf5e, #faa968, #e97b3c, #c4561f | #c2f0c0, #8fd694, #5cbf8f, #2fa59a, #028391, #016a75"
