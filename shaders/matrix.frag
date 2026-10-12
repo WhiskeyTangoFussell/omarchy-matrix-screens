@@ -58,11 +58,13 @@ void main() {
         return;
     }
 
-    // One texel per cell, fetched by index: the canvas's backing image can
-    // come out a row or column larger than the grid at a fractional scale,
-    // and a normalized lookup drifts into that empty row (the bottom row
-    // never showed).
-    vec4 state = texelFetch(stateTex, ivec2(cell), 0);
+    // Each cell is a square of texels whose size depends on the window's
+    // device pixel ratio. Measure it from the image width and fetch the
+    // square's center texel by index: the edges are antialiased, and the
+    // image can come out a row larger than the grid at a fractional scale,
+    // which a normalized lookup would drift into (the bottom row never showed).
+    float texelsPerCell = float(textureSize(stateTex, 0).x) / gridSize.x;
+    vec4 state = texelFetch(stateTex, ivec2(floor((cell + 0.5) * texelsPerCell)), 0);
     // Painted cells are opaque; a transparent texel is canvas the grid never
     // covered (fractional scaling rounds the backing image up a row), which
     // would otherwise decode as glyph 0, a row of white '!'.

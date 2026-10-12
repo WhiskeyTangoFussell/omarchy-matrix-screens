@@ -6,16 +6,18 @@ import "cmatrix.js" as CMatrix
 //
 //   cmatrix.js   — the ported engine: a COLS x LINES grid of glyph codes that
 //                  advances once per 40 ms terminal tick.
-//   stateCanvas  — a COLS x LINES pixel image. Each pixel is one cell:
-//                  R = glyph index, G = palette slot, B = bold. Only cells
-//                  whose value changed since the last tick are repainted,
-//                  which is exactly what ncurses does to a terminal.
-//                  A Canvas allocates its image at item size x the window's
-//                  device pixel ratio and antialiases fills, so on a scaled
-//                  monitor the cell bytes would smear into their neighbours.
-//                  The item is therefore sized COLS/dpr x LINES/dpr, so the
-//                  image is exactly COLS x LINES, and every cell is painted
-//                  as a 1/dpr square: one texel, edges on texel boundaries.
+//   stateCanvas  — one small square per cell: R = glyph index, G = palette
+//                  slot, B = bold. Only cells whose value changed since the
+//                  last tick are repainted, which is exactly what ncurses
+//                  does to a terminal. A Canvas allocates its image at item
+//                  size x the window's device pixel ratio and antialiases
+//                  fills, so a square's edges smear into its neighbours on a
+//                  scaled monitor. Each square is therefore stateCellSize
+//                  logical pixels (at least two texels at any scale), and the
+//                  shader works out texels per cell from the image's real size
+//                  and reads the texel at each square's center, which no edge
+//                  touches. Nothing depends on knowing the ratio, which some
+//                  surfaces (the session lock) don't report.
 //   atlasCanvas  — every glyph of the charset drawn once with the system
 //                  monospace font, regular on top, bold underneath.
 //   effect       — a fragment shader that maps each screen pixel to a cell,
@@ -77,13 +79,8 @@ Item {
   // rainbow set green, blue, black, yellow, cyan, magenta.
   property var rainPalette: ["#C1C497", "#549e6a", "#549e6a", "#509475", "#111c18", "#459451", "#2DD5B7", "#D2689C"]
 
-  // The effective ratio of the window we are in. Screen.devicePixelRatio is
-  // the integer wl_output scale (2 for a 1.25 fractional scale); QsWindow's
-  // property is the fractional one and notifies when it changes.
-  readonly property real devicePixelRatio: {
-    var w = QsWindow.window
-    return w && w.devicePixelRatio > 0 ? w.devicePixelRatio : 1
-  }
+  // Side of each cell's square in the state canvas, in logical pixels.
+  readonly property int stateCellSize: 2
 
   readonly property int ticksPerSecond: Math.round(1000 / CMatrix.intervalMs(updateDelay))
   readonly property int cols: Math.max(2, Math.floor(width / cellWidth))
@@ -231,8 +228,7 @@ Item {
     if (cols !== root.cols || lines !== root.lines) return
     var t0 = profiler.now()
     var painted = 0
-    // One texel in the canvas's logical units; the context scales by dpr.
-    var s = 1 / devicePixelRatio
+    var s = stateCellSize
 
     if (fullRepaint) {
       ctx.fillStyle = "#ff0000"
@@ -337,9 +333,8 @@ Item {
 
   Canvas {
     id: stateCanvas
-    // Backing image = item size x dpr, rounded: exactly cols x lines texels.
-    width: root.cols / root.devicePixelRatio
-    height: root.lines / root.devicePixelRatio
+    width: root.cols * root.stateCellSize
+    height: root.lines * root.stateCellSize
     visible: false
     renderStrategy: Canvas.Immediate
     renderTarget: Canvas.Image
