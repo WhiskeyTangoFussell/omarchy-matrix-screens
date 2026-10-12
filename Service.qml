@@ -183,6 +183,13 @@ Item {
   }
 
   function armBlankTimer() {
+    // Matrix Screens: the rain is the point of this lock screen, so keep the
+    // display on while it shows. Power is left to the idle settings (e.g. a
+    // sleep-after-lock timer) instead of blanking 5 s after every lock or wake.
+    if (rainService.lockRainVisible) {
+      idleBlankTimer.stop()
+      return
+    }
     idleBlankTimer.armedAt = Date.now()
     idleBlankTimer.restart()
   }
@@ -452,7 +459,7 @@ Item {
       // Only a password check in flight should hold the display up. The
       // fingerprint PAM stays armed for the whole lock, so gating on
       // `authenticating` here would keep the panel lit until unlock.
-      if (root.lockRequested && !root.authenticatingPassword) root.runBlank()
+      if (root.lockRequested && !root.authenticatingPassword && !rainService.lockRainVisible) root.runBlank()
     }
   }
 
