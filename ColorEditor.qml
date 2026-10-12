@@ -495,7 +495,7 @@ Column {
       trackColor: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.2)
       fillColor: root.foreground
       knobColor: root.foreground
-      onMoved: function (v) { var d = Colors.copy(root.draft); d.fade = v; root.draft = d }
+      onMoved: function (v) { var d = Colors.copy(root.draft); d.fade = Colors.snap(v, 0.05); root.draft = d }
     }
 
     Label { text: "HUE SHIFT  " + root.draft.shift.toFixed(1) }
@@ -509,7 +509,7 @@ Column {
       trackColor: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.2)
       fillColor: root.foreground
       knobColor: root.foreground
-      onMoved: function (v) { var d = Colors.copy(root.draft); d.shift = v; root.draft = d }
+      onMoved: function (v) { var d = Colors.copy(root.draft); d.shift = Colors.snap(v, 0.5); root.draft = d }
     }
 
     Label { text: "SPEED  " + Colors.rateFromDelay(root.draftDelay).toFixed(1) + " steps/s" }
@@ -523,7 +523,7 @@ Column {
       trackColor: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.2)
       fillColor: root.foreground
       knobColor: root.foreground
-      onMoved: function (v) { root.draftDelay = Colors.delayFromRate(v) }
+      onMoved: function (v) { root.draftDelay = Colors.delayFromRate(Colors.snap(v, 0.5)) }
     }
   }
 

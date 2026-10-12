@@ -130,6 +130,11 @@ function withGroupAdded(draft) {
   return next
 }
 
+// A slider's raw drag position, snapped to its step (and tidied to 2 decimals).
+function snap(value, step) {
+  return Math.round(Math.round(Number(value) / step) * step * 100) / 100
+}
+
 function round2(x) { return Math.round(Number(x) * 100) / 100 }
 
 // The palette file for a draft: its colors. Any other settings already in

@@ -86,3 +86,10 @@ test("a saved palette file holds colors only; hand-written settings in it are ke
   assert.match(text, /bold = "none"/)
   assert.match(text, /head_color = "#ffffff"/)
 })
+
+test("slider values snap to their steps", () => {
+  assert.equal(C.snap(0.49676513671875, 0.05), 0.5)
+  assert.equal(C.snap(2.83, 0.5), 3)
+  assert.equal(C.snap(11.96, 0.5), 12)
+  assert.equal(C.delayFromRate(C.snap(11.96, 0.5)), 8.333)
+})
