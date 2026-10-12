@@ -27,8 +27,7 @@ Matrix digital rain as your desktop background, screensaver and lock screen, in 
 | ![Customize Text & Display](screenshots/03-panel-text-and-display.png) | **Customize Text & Display**: typeface, size, tail fade, hue shift and speed. |
 | ![Typeface dropdown](screenshots/04-panel-typeface-dropdown.png) | The typeface dropdown, with a search box. |
 | ![Unsaved changes](screenshots/05-panel-unsaved-changes.png) | Unsaved changes turn the section's save, undo and reset icons red; the preview shows the draft. |
-| ![Modify Color Palette](screenshots/06-panel-color-palette.png) | **Modify Color Palette**: head, background and tail colors, with a color picker. |
-| ![Bottom of Modify Color Palette](screenshots/07-panel-color-palette-bottom.png) | The theme's colors as quick picks, and *Manually Edit Color Configuration*. |
+| ![Modify Color Palette](screenshots/06-panel-color-palette.png) | **Modify Color Palette**: head, background and tail colors, a color picker, the theme's colors as quick picks, and *Manually Edit Color Configuration*. |
 
 ## Installation
 
