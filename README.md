@@ -67,6 +67,18 @@ The panel has two collapsible sections. Each header has **save**, **undo** and *
 
 The rain uses the active theme's own colors: heads in its foreground color, tails in its accent, green and cyan. Saving a palette in Modify Color Palette replaces them for that theme only, in `~/.config/omarchy/matrix-screens/<theme>.toml`; reset (or deleting the file) goes back to the theme's colors.
 
+**For theme authors:** a theme can ship its own rain colors as extra keys in its `colors.toml` (Omarchy ignores keys it doesn't use). They become that theme's default; a palette the user saves still wins:
+
+```toml
+matrix_head_color = "#ffffff"
+matrix_tail_colors = "#ff1f3d | #ff7a00 | #ffee00 | #00ff4c | #00e5ff | #3d4dff | #ff2bd6"
+matrix_background_color = "#0b0b12"   # optional; defaults to the theme background
+matrix_tail_fade = 0.85               # optional
+matrix_tail_hue_shift = 3             # optional
+```
+
+See [Spectrum](https://github.com/WhiskeyTangoFussell/omarchy-spectrum-theme) for an example.
+
 A palette file holds colors, as `#rrggbb` or any name from the theme's `colors.toml` (`accent`, `foreground`, `bright_cyan`, ...):
 
 ```toml

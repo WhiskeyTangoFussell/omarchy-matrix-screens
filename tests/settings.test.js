@@ -162,3 +162,23 @@ test("settings.json helpers: set/remove keys, migrate a legacy shell.json entry"
   assert.deepEqual(plain(config.bar.layout.right[0]), { id })
   assert.equal(S.legacySettings(S.pluginEntry(config, id)), null)
 })
+
+test("a theme's matrix_* keys in colors.toml are its rain defaults; your palette and settings still win", () => {
+  const colors = { background: "#0b0b12", foreground: "#e0e0ff", accent: "#ff2bd6",
+    matrix_head_color: "#ffffff", matrix_tail_colors: "#ff1f3d | #00ff4c", matrix_tail_fade: 0.85, matrix_tail_hue_shift: 3 }
+  const rain = S.themeRainDefaults(colors)
+  assert.deepEqual(plain(rain), { head_color: "#ffffff", tail_colors: "#ff1f3d | #00ff4c", tail_fade: 0.85, tail_hue_shift: 3 })
+  assert.equal(S.themeRainDefaults({ accent: "#fff" }), null)
+  // Theme default
+  let r = S.resolve({}, null, "theme", rain)
+  assert.deepEqual(plain(S.palette(r, colors, {})).slice(8), ["#ff1f3d", "#00ff4c"])
+  assert.equal(r.tailFade, 0.85)
+  assert.equal(r.tailHueShift, 3)
+  assert.equal(S.palette(r, colors, {})[0], "#ffffff")
+  // Your saved palette replaces the colors; the theme's fade still applies unless the file sets one
+  r = S.resolve({}, { tail_colors: "#123456" }, "custom", rain)
+  assert.deepEqual(plain(S.palette(r, colors, {})).slice(8), ["#123456"])
+  assert.equal(r.tailFade, 0.85)
+  // Your settings beat everything
+  assert.equal(S.resolve({ tail_fade: 0.2 }, null, "theme", rain).tailFade, 0.2)
+})

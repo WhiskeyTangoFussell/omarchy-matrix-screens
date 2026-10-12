@@ -90,13 +90,40 @@ function lookup(source, key) {
 // (paletteSource "custom"), which can set anything. Both sources accept
 // snake_case (TOML style) and camelCase (JSON style). paletteSettings is null
 // when no palette file applies.
-function merge(userSettings, paletteSettings, paletteSource) {
+// themeRain: the theme's own rain defaults (themeRainDefaults()), or null.
+// They stand in for THEME_COLORS and the fade/hue-shift defaults.
+function merge(userSettings, paletteSettings, paletteSource, themeRain) {
   var colorDefaults = paletteSettings ? PLAIN_COLORS : THEME_COLORS
   var ownFile = paletteSource === "custom" ? paletteSettings : null
+  var theme = themeRain || {}
   var out = {}
   var key
-  for (key in DEFAULTS) out[key] = pick(userSettings, ownFile, key, DEFAULTS[key])
-  for (key in colorDefaults) out[key] = pick(userSettings, paletteSettings, key, colorDefaults[key])
+  for (key in DEFAULTS) {
+    var fallback = THEME_RAIN_SETTINGS.indexOf(key) !== -1 && theme[key] !== undefined ? theme[key] : DEFAULTS[key]
+    out[key] = pick(userSettings, ownFile, key, fallback)
+  }
+  for (key in colorDefaults) {
+    var colorFallback = !paletteSettings && theme[key] !== undefined ? theme[key] : colorDefaults[key]
+    out[key] = pick(userSettings, paletteSettings, key, colorFallback)
+  }
+  return out
+}
+
+// A theme can ship its own rain defaults as extra keys in its colors.toml:
+//   matrix_head_color, matrix_color, matrix_tail_colors, matrix_background_color,
+//   matrix_tail_fade, matrix_tail_hue_shift
+// Your saved palette and your settings still win over them.
+var THEME_RAIN_SETTINGS = ["tail_fade", "tail_hue_shift"]
+var THEME_RAIN_KEYS = ["head_color", "color", "tail_colors", "background_color"].concat(THEME_RAIN_SETTINGS)
+
+function themeRainDefaults(themeColors) {
+  var out = null
+  for (var i = 0; i < THEME_RAIN_KEYS.length; i++) {
+    var value = (themeColors || {})["matrix_" + THEME_RAIN_KEYS[i]]
+    if (value === undefined || value === null || value === "") continue
+    if (!out) out = {}
+    out[THEME_RAIN_KEYS[i]] = value
+  }
   return out
 }
 
@@ -227,8 +254,8 @@ function tailGroups(groups) {
 }
 
 // Everything the renderer needs, typed and clamped.
-function resolve(userSettings, paletteSettings, paletteSource) {
-  var s = merge(userSettings, paletteSettings, paletteSource)
+function resolve(userSettings, paletteSettings, paletteSource, themeRain) {
+  var s = merge(userSettings, paletteSettings, paletteSource, themeRain)
   return {
     updateDelay: number(s.update_delay, DEFAULTS.update_delay, 0, 30),
     asynchronous: bool(s.asynchronous, false),
@@ -265,7 +292,8 @@ function resolve(userSettings, paletteSettings, paletteSource) {
 }
 
 // Where a theme's palette comes from: your saved palette for that theme, if
-// you've saved one (Modify Color Palette); otherwise the theme's own colors.
+// you've saved one (Modify Color Palette); otherwise the theme's own colors
+// (its matrix_* keys in colors.toml if it has them, see themeRainDefaults).
 // A list, so ThemeSource can watch every candidate the same way.
 function paletteCandidates(home, themeName) {
   return [

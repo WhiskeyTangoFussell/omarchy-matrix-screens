@@ -37,14 +37,16 @@ Item {
     for (var i = 0; i < candidates.length; i++) if (candidateTexts[i] !== null && candidateTexts[i] !== undefined) return i
     return -1
   }
-  readonly property string paletteSource: paletteIndex < 0 ? "theme-colors" : candidates[paletteIndex].source
+  readonly property string paletteSource: paletteIndex >= 0 ? candidates[paletteIndex].source : (themeRain ? "theme" : "theme-colors")
   readonly property string palettePath: paletteIndex < 0 ? "" : candidates[paletteIndex].path
   // Your custom palette file for this theme, and its text ("" when absent).
   readonly property string customPath: candidates[0].path
   readonly property string customText: candidateTexts[0] || ""
   readonly property var paletteSettings: paletteIndex < 0 ? null : CMatrix.parseFlatToml(candidateTexts[paletteIndex])
 
-  readonly property var config: Settings.resolve(userSettings, paletteSettings, paletteSource)
+  // The theme's own rain defaults, from matrix_* keys in its colors.toml.
+  readonly property var themeRain: Settings.themeRainDefaults(themeColors)
+  readonly property var config: Settings.resolve(userSettings, paletteSettings, paletteSource, themeRain)
   readonly property var palette: Settings.palette(config, themeColors, fallbacks)
   readonly property var tailGroups: Settings.tailGroups(config.tailColors)
   readonly property color backgroundColor: Settings.backgroundColor(config, themeColors, fallbacks)
