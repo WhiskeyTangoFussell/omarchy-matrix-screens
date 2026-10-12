@@ -26,8 +26,8 @@ import "cmatrix.js" as CMatrix
 // cycle ends, when the session locks, or when another screensaver's window
 // appears.
 //
-// Colors: ThemeSource.qml picks the palette (your custom file, the theme's
-// own, the bundled one, or the theme's colors).
+// Colors: the theme's own, unless you've saved a palette for it
+// (ThemeSource.qml).
 Item {
   id: root
 
