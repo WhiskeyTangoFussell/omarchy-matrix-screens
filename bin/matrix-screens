@@ -53,7 +53,7 @@ tile_size() {
 draw_tile() {
   local out=$1 size=$2 bg=$3 groups=$4 head=$5 fade=$6 shift=$7
   local w=${size%x*} h=${size#*x} mvg
-  command -v magick >/dev/null || die "drawing tiles needs ImageMagick (omarchy pkg add imagemagick)"
+  command -v magick >/dev/null || die "drawing tiles needs ImageMagick (the magick command)"
   mvg=$(mktemp --suffix=.mvg)
   # shellcheck disable=SC2064
   trap "rm -f '$mvg'" RETURN

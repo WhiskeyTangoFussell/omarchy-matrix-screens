@@ -38,11 +38,11 @@ omarchy plugin add https://github.com/WhiskeyTangoFussell/omarchy-matrix-screens
 
 This adds the matrix icon to the right of your bar. Out of the box the screensaver and lock-screen rain are off; switch them on in the panel. The background rain shows while its tile is selected in the background switcher (`Super + Ctrl + Space`), or with the Background switch.
 
-**Requirements:** Omarchy 4 (Quickshell shell, Hyprland), with `jq`, `hyprctl` and `fontconfig`, all part of Omarchy. ImageMagick draws the background-switcher tiles; without it the rain still runs (`omarchy pkg add imagemagick`). No other plugins are needed.
+**Requirements:** Omarchy 4 (Quickshell shell, Hyprland), with `jq`, `hyprctl` and `fontconfig`, all part of Omarchy. ImageMagick (`magick`) draws the background-switcher tiles. Without it the screensaver and lock screen rain still work, but no tiles are drawn, so the background rain needs `background-mode always`. No other plugins are needed.
 
 **The lock screen:** while the plugin is enabled, it *is* your lock screen. It takes the place of Omarchy's built-in lock the same way `omarchy plugin clone omarchy.lock` does, and disabling or removing the plugin brings the built-in lock back. The lock code is Omarchy 4.0.3's own (same PAM password and fingerprint flows) with the rain added; with the lock-screen switch off it looks like the built-in lock. Updates Omarchy makes to its lock reach this copy only when the plugin is updated. If you use another lock plugin, disable it first.
 
-Plugins run as unsandboxed code in your desktop shell, so read the code before enabling one. This one runs nothing at install time and never asks for `sudo`.
+Plugins run as unsandboxed code in your desktop shell, so read the code before enabling one. This one runs nothing at install time and needs no root access.
 
 ## Using it
 
