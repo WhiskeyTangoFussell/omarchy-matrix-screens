@@ -28,7 +28,7 @@ test("hex and HSV round-trip", () => {
 })
 
 test("draft comes from the palette in use; saving gives a file that resolves to the same colors", () => {
-  const settings = E.parseFlatToml(fs.readFileSync(path.join(__dirname, "..", "palettes", "spectrum.toml"), "utf8"))
+  const settings = E.parseFlatToml('head_color = "#ffffff"\ntail_colors = "#ff1f3d | #ff7a00 | #ffb000 | #ffee00 | #9dff00 | #00ff4c | #00ffb3 | #00e5ff | #0091ff | #3d4dff | #9b3dff | #ff2bd6"\n')
   const config = S.resolve({}, settings)
   const palette = S.palette(config, {}, { foreground: "#ffffff", background: "#000000", accent: "#00ff00", urgent: "#ff0000" })
   const draft = C.draftFrom(config, palette, "#0b0b12")

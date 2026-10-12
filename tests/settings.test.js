@@ -32,7 +32,7 @@ test("shell.json entry beats the theme file, which beats defaults, in either key
   assert.equal(S.merge({}, {}).on_battery, "slow")
 })
 
-test("theme and bundled palettes supply colors only; the defaults apply to everything else", () => {
+test("a palette that isn't your saved one would supply colors only; the defaults apply to everything else", () => {
   const themeFile = { update_delay: 4, tail_fade: 0.85, tail_hue_shift: 3, font_family: "X", head_color: "#123456" }
   const r = S.resolve({}, themeFile, "theme")
   assert.equal(r.updateDelay, 8.333)       // 12 steps a second
@@ -111,38 +111,15 @@ test("a palette file replaces every color; its unset keys are plain cmatrix", ()
   assert.equal(r.tailFade, 0.5)        // the global default
 })
 
-test("bundled palettes parse and resolve to their hex colors", () => {
-  const E = loadLibrary("cmatrix.js")
-  const dir = path.join(__dirname, "..", "palettes")
-  const files = fs.readdirSync(dir).filter(f => f.endsWith(".toml"))
-  assert.deepEqual(files.sort(), ["catppuccin", "ethereal", "hackerman", "retro-82", "spectrum", "tokyo-night", "vantablack", "white"].map(n => n + ".toml"))
-  for (const f of files) {
-    const settings = E.parseFlatToml(fs.readFileSync(path.join(dir, f), "utf8"))
-    const r = S.resolve({}, settings)
-    const p = plain(S.palette(r, tokyo, shellFallbacks))
-    assert.ok(p.length > 8 && p.length <= 20, f)
-    for (const c of p.slice(8)) assert.match(c, /^#[0-9a-fA-F]{6}$/, f)
-  }
-  const spectrum = S.resolve({}, E.parseFlatToml(fs.readFileSync(path.join(dir, "spectrum.toml"), "utf8")))
-  assert.equal(spectrum.tailFade, 0.5)
-  assert.equal(spectrum.tailHueShift, 6)
-})
-
 test("shell.json still beats a palette file, for colors too", () => {
   const r = S.resolve({ tail_colors: "#010101" }, { tail_colors: "#020202 | #030303" })
   assert.deepEqual(plain(r.tailColors), [["#010101"]])
 })
 
-test("palette candidates: custom, theme, omatrix, bundled; fixed positions", () => {
-  const c = plain(S.paletteCandidates("/h", "retro-82", "/p"))
-  assert.deepEqual(c.map(x => x.path), [
-    "/h/.config/omarchy/matrix-screens/retro-82.toml",
-    "/h/.local/state/omarchy/current/theme/matrix-screens.toml",
-    "/h/.local/state/omarchy/current/theme/omatrix.toml",
-    "/p/palettes/retro-82.toml"
-  ])
-  assert.equal(S.paletteCandidates("/h", "", "/p").length, 4)
-  assert.equal(S.paletteCandidates("/h", "", "/p")[0].path, "")
+test("palette candidates: only your saved palette for the theme", () => {
+  const c = plain(S.paletteCandidates("/h", "retro-82"))
+  assert.deepEqual(c, [{ source: "custom", path: "/h/.config/omarchy/matrix-screens/retro-82.toml" }])
+  assert.equal(S.paletteCandidates("/h", "")[0].path, "")
 })
 
 test("tile arguments follow the resolved palette", () => {

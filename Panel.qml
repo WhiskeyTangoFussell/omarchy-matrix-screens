@@ -63,10 +63,7 @@ Panel {
     if (!rain) return ""
     var source = rain.paletteSource
     var name = rain.themeName
-    if (source === "custom") return name + " · your colors"
-    if (source === "theme") return name + " · the theme's rain colors"
-    if (source === "bundled") return name + " · bundled colors"
-    return name + " · theme colors"
+    return name + (source === "custom" ? " · your colors" : " · theme colors")
   }
 
   Timer {

@@ -5,7 +5,7 @@
   "version": "0.3.0",
   "author": "Fussell",
   "license": "GPL-3.0-or-later",
-  "description": "Matrix digital rain as your desktop background, screensaver and lock screen, in your theme's colors. A bar icon switches each one on or off. Hand-tuned palettes for eight themes, your own colors per theme, and the Caskaydia Cove font bundled. Replaces Omarchy's lock screen while enabled.",
+  "description": "Matrix digital rain as your desktop background, screensaver and lock screen, in your theme's colors. A bar icon switches each one on or off. Your own palette per theme if you want one, and the Caskaydia Cove font bundled. Replaces Omarchy's lock screen while enabled.",
   "kinds": [
     "service",
     "bar-widget"

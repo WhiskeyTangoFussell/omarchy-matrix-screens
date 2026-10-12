@@ -260,8 +260,7 @@ Column {
   }
 
   // Back to the applied theme's own rain colors: delete your custom palette
-  // file; the editor reloads from what applies instead (the theme's rain
-  // file, the bundled palette, or the theme's colors).
+  // file; the editor reloads with the theme's own colors.
   function resetPalette() {
     if (!rain) return
     undoPalette()
@@ -534,7 +533,7 @@ Column {
     hasCursor: root.paletteCursor
     unsaved: root.paletteDirty
     canReset: root.hasCustom
-    resetTip: "Reset colors to the theme's defaults"
+    resetTip: "Back to the theme's own colors"
     onToggled: root.paletteOpen = !root.paletteOpen
     onHoveredHeader: root.headerHovered(1)
     onSaveClicked: root.savePalette()

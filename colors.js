@@ -148,7 +148,7 @@ function serialize(draft, themeName, existingText) {
   var groups = draft.groups.map(function (g) { return g.join(", ") }).join(" | ")
   var out = [
     "# Matrix Screens: your colors for " + themeName + " (saved by the color chooser).",
-    "# This file wins over the theme's and the bundled palette. Delete it to go back.",
+    "# It replaces the theme's own colors. Delete it (or Reset in the panel) to go back.",
     "",
     "head_color = \"" + draft.head + "\"",
     "color = \"" + draft.groups[0][0] + "\"",

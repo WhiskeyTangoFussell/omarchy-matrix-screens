@@ -5,8 +5,8 @@ import "settings.js" as Settings
 import "cmatrix.js" as CMatrix
 
 // Reads the active Omarchy theme and works out what the rain should look
-// like: its name, its colors.toml, the palette file that applies to it (see
-// Settings.paletteCandidates) and the bundled font. Used by the desktop
+// like: its name, its colors.toml, your saved palette for it if there is one
+// (see Settings.paletteCandidates) and the bundled font. Used by the desktop
 // background (Service.qml) and the screensaver, so it needs nothing from the
 // Omarchy shell itself.
 Item {
@@ -30,8 +30,8 @@ Item {
 
   // ------------------------------------------------------------ palette
 
-  readonly property var candidates: Settings.paletteCandidates(home, themeName, pluginDir)
-  property var candidateTexts: [null, null, null, null]
+  readonly property var candidates: Settings.paletteCandidates(home, themeName)
+  property var candidateTexts: [null]
 
   readonly property int paletteIndex: {
     for (var i = 0; i < candidates.length; i++) if (candidateTexts[i] !== null && candidateTexts[i] !== undefined) return i

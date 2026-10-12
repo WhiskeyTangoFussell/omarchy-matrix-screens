@@ -11,8 +11,8 @@
 // columns spread edge to edge, tails fading halfway toward the background
 // while drifting through the next six tail colors.
 //
-// Only your own settings change these: the plugin's settings.json and
-// your custom palette file. Theme and bundled palettes supply colors only.
+// Only your own settings change these: the plugin's settings.json (and,
+// for one theme, a setting hand-written into your saved palette file).
 var DEFAULTS = {
   update_delay: 8.333,
   asynchronous: false,
@@ -264,20 +264,12 @@ function resolve(userSettings, paletteSettings, paletteSource) {
   }
 }
 
-// Where a theme's palette can come from, best first. The first file that
-// exists wins outright; with none, the theme's own colors are used.
-//   1. ~/.config/omarchy/matrix-screens/<theme>.toml   your custom colors
-//   2. <current theme>/matrix-screens.toml              shipped by the theme
-//   3. <current theme>/omatrix.toml                     omatrix-style themes
-//   4. <plugin>/palettes/<theme>.toml                   bundled with the plugin
-function paletteCandidates(home, themeName, pluginDir) {
-  var theme = home + "/.local/state/omarchy/current/theme"
-  // Always four entries, so their positions stay put; "" never loads.
+// Where a theme's palette comes from: your saved palette for that theme, if
+// you've saved one (Modify Color Palette); otherwise the theme's own colors.
+// A list, so ThemeSource can watch every candidate the same way.
+function paletteCandidates(home, themeName) {
   return [
-    { source: "custom", path: themeName ? home + "/.config/omarchy/matrix-screens/" + themeName + ".toml" : "" },
-    { source: "theme", path: theme + "/matrix-screens.toml" },
-    { source: "theme", path: theme + "/omatrix.toml" },
-    { source: "bundled", path: themeName ? pluginDir + "/palettes/" + themeName + ".toml" : "" }
+    { source: "custom", path: themeName ? home + "/.config/omarchy/matrix-screens/" + themeName + ".toml" : "" }
   ]
 }
 

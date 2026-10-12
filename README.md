@@ -7,7 +7,7 @@ Matrix digital rain as your desktop background, screensaver and lock screen, in 
 ## Features
 
 - **Background, screensaver and lock screen**, each switched on or off on its own. All three draw the same rain with the same font, size, speed and colors.
-- **Every theme works.** Eight themes have hand-tuned palettes (Tokyo Night, Hackerman, White, Vantablack, Retro-82, Catppuccin, Ethereal, Spectrum); any other theme uses its own colors.
+- **Every theme works.** The rain takes the active theme's own colors, and you can save your own palette for any theme.
 - **Customize from the bar:** typeface, size, tail fade, hue shift and speed for every theme, and a color editor for each theme, with a live preview.
 - **Bundled font:** Caskaydia Cove Nerd Font Mono, so the rain looks the same whatever fonts you have installed.
 - **Light on power:** the background rain stops behind fullscreen windows, under the lock and the screensaver, and while another wallpaper is selected.
@@ -65,14 +65,9 @@ The panel has two collapsible sections. Each header has **save**, **undo** and *
 
 ### Where colors come from
 
-For the active theme, the first of these that exists is used:
+The rain uses the active theme's own colors: heads in its foreground color, tails in its accent, green and cyan. Saving a palette in Modify Color Palette replaces them for that theme only, in `~/.config/omarchy/matrix-screens/<theme>.toml`; reset (or deleting the file) goes back to the theme's colors.
 
-1. `~/.config/omarchy/matrix-screens/<theme>.toml`: your colors
-2. `matrix-screens.toml` (or an omatrix-style `omatrix.toml`) shipped with the theme
-3. `palettes/<theme>.toml` in this plugin: the bundled palettes
-4. Otherwise, the theme's own colors: heads in its foreground color, tails in its accent, green and cyan
-
-A palette file holds colors only. Colors are `#rrggbb` or any name from the theme's `colors.toml` (`accent`, `foreground`, `bright_cyan`, ...):
+A palette file holds colors, as `#rrggbb` or any name from the theme's `colors.toml` (`accent`, `foreground`, `bright_cyan`, ...):
 
 ```toml
 head_color = "#ffffff"
@@ -109,7 +104,7 @@ $B status
 $B background|screensaver|lock on|off|toggle
 $B screensaver launch|stop
 $B colors              # open the panel at Modify Color Palette
-$B customize [theme]   # copy the theme's colors to your file, for hand editing
+$B customize [theme]   # path of your palette for a theme (starts one if needed)
 ```
 
 The shell IPC target is `matrixscreens` (`omarchy-shell matrixscreens status`); the lock keeps Omarchy's `omarchy-shell lock ...` commands.

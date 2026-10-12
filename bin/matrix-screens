@@ -180,55 +180,27 @@ cmd_screensaver() {
 
 # ---- palettes ---------------------------------------------------------------
 
-# customize [theme]: copy the palette in use into your custom folder (or start
-# one from the theme's colors) and print its path. Your copy wins from then on.
+# customize [theme]: print the path of your palette for a theme, starting one
+# from the theme's own colors if there's none yet. Saving it replaces the
+# theme's colors for the rain; deleting it goes back to them.
 cmd_customize() {
   local theme=${1:-$(current_theme)}
   [[ $theme =~ ^[A-Za-z0-9._-]+$ ]] || die "no theme given and no active theme"
-  local out="$CUSTOM_DIR/$theme.toml" src=""
-  if [[ -f $out ]]; then
-    echo "$out"
-    return
-  fi
-  mkdir -p "$CUSTOM_DIR"
-  if [[ $theme == "$(current_theme)" ]]; then
-    for f in "$HOME/.local/state/omarchy/current/theme/matrix-screens.toml" "$HOME/.local/state/omarchy/current/theme/omatrix.toml"; do
-      [[ -f $f ]] && { src=$f; break; }
-    done
-  fi
-  [[ -z $src && -f $PLUGIN_DIR/palettes/$theme.toml ]] && src="$PLUGIN_DIR/palettes/$theme.toml"
-
-  if [[ -n $src ]]; then
-    {
-      echo "# Matrix Screens: your colors for $theme (copied from $src)."
-      echo "# This file wins over the theme's and the bundled palette. Delete it to go back."
-      echo
-      # Colors only: a theme's other settings don't carry over.
-      grep -E '^\s*#\s{4,}|^(color|head_color|tail_colors|background_color)\s*=' "$src"
-      echo
-      echo "# Uncomment to change the defaults for this theme."
-      echo "# tail_fade = 0.5        # 0..1: how far each tail dims toward the background"
-      echo "# tail_hue_shift = 6     # how many tail colors each stream sweeps through"
-    } >"$out"
-  else
+  local out="$CUSTOM_DIR/$theme.toml"
+  if [[ ! -f $out ]]; then
+    mkdir -p "$CUSTOM_DIR"
     cat >"$out" <<EOF
 # Matrix Screens: your colors for $theme.
-# This file wins over the theme's and the bundled palette. Delete it to go back.
+# It replaces the theme's own colors. Delete it (or Reset in the panel) to go back.
 #
 # Colors are #rrggbb or any colors.toml name (accent, foreground, green,
-# bright_cyan, ...). These lines start out as the theme-color defaults.
+# bright_cyan, ...). These lines start out as the theme's own colors.
 
 head_color = "foreground"
 color = "accent"
 
 # Hue groups separated by "|", shades within a group by ","; up to 12 in all.
 tail_colors = "accent | bright_green, green | bright_cyan, cyan"
-
-# 0..1: how far each tail dims toward the background behind its head.
-tail_fade = 0.5
-
-# How many tail colors each stream sweeps through, head to tail (0 = off).
-tail_hue_shift = 6
 
 # background_color = "background"
 EOF
