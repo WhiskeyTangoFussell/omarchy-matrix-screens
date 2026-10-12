@@ -36,7 +36,7 @@ Matrix digital rain as your desktop background, screensaver and lock screen, in 
 omarchy plugin add https://github.com/WhiskeyTangoFussell/omarchy-matrix-screens --enable
 ```
 
-This adds the matrix icon to the right of your bar. Out of the box the lock-screen rain is on, the screensaver is off, and the background rain shows while its tile is selected in the background switcher (`Super + Ctrl + Space`).
+This adds the matrix icon to the right of your bar. Out of the box the screensaver and lock-screen rain are off; switch them on in the panel. The background rain shows while its tile is selected in the background switcher (`Super + Ctrl + Space`), or with the Background switch.
 
 **Requirements:** Omarchy 4 (Quickshell shell, Hyprland), with `jq`, `hyprctl` and `fontconfig`, all part of Omarchy. ImageMagick draws the background-switcher tiles; without it the rain still runs (`omarchy pkg add imagemagick`). No other plugins are needed.
 
@@ -94,7 +94,7 @@ Settings live in the plugin's own file, `~/.config/omarchy/matrix-screens/settin
 
 | Key | Default | |
 |---|---|---|
-| `screensaver`, `lock_screen` | `false`, `true` | the switches |
+| `screensaver`, `lock_screen` | `false`, `false` | the switches |
 | `background` | `"tile"` | `"tile"`: while a rain tile is selected; `"always"`; `"off"` |
 | `font_family`, `font_size` | Caskaydia Cove, `0` | `""` = Omarchy's font; `0` = Omarchy's size |
 | `tail_fade`, `tail_hue_shift` | `0.5`, `6` | how far tails dim; how many tail colors each stream drifts through |

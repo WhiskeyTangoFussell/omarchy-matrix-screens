@@ -45,7 +45,7 @@ var DEFAULTS = {
   // Start the rain as the screensaver when the computer goes idle.
   screensaver: false,
   // Draw the rain behind the lock screen's password box.
-  lock_screen: true,
+  lock_screen: false,
   // Close the screensaver when the mouse moves, not just on a key press.
   screensaver_dismiss_on_mouse: true
 }
@@ -285,7 +285,7 @@ function resolve(userSettings, paletteSettings, paletteSource, themeRain) {
     backgroundTile: bool(s.background_tile, true),
     keepOnThemeSwitch: bool(s.keep_on_theme_switch, true),
     screensaver: bool(s.screensaver, false),
-    lockScreen: bool(s.lock_screen, true),
+    lockScreen: bool(s.lock_screen, false),
     screensaverDismissOnMouse: bool(s.screensaver_dismiss_on_mouse, true),
     raw: s
   }

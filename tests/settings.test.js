@@ -139,7 +139,8 @@ test("plugin entry is found in plugins[] or in the bar layout, and settings are 
   assert.deepEqual(plain(config.bar.layout.right[1]), { id, lock_screen: false })
   assert.equal(S.pluginEntry(config, id).lock_screen, false)
   assert.equal(S.setPluginSetting({ plugins: [] }, id, "x", 1), false)
-  assert.equal(S.resolve({}, null).lockScreen, true)
+  assert.equal(S.resolve({}, null).lockScreen, false)   // off until switched on
+  assert.equal(S.resolve({}, null).screensaver, false)
 })
 
 test("setting a key to undefined removes it from the entry", () => {
