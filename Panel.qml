@@ -10,7 +10,13 @@ import "colors.js" as Colors
 // preview, one switch each for the background, the screensaver and the lock
 // screen, and a Customize section (collapsed by default) with the color
 // editor. Left click opens the panel, right click starts the screensaver
-// now. All state and actions live in Rain.qml (the service's `rain`).
+// now.
+//
+// The panel can't reach the service object: the manifest makes the service
+// a lock screen, and Omarchy keeps lock services out of reach of other
+// plugin code. So it keeps its own copy of the settings and theme colors
+// (RainSettings.qml, shared with the service through settings.json), and
+// asks the service for the rest over IPC (`omarchy-shell matrixscreens`).
 Panel {
   id: root
 
@@ -18,12 +24,70 @@ Panel {
   moduleName: pluginId
   ipcTarget: pluginId
 
-  readonly property var service: bar && bar.shell && typeof bar.shell.serviceFor === "function" ? bar.shell.serviceFor(pluginId) : null
-  readonly property var rain: service ? service.rain : null
+  RainSettings { id: settings }
+  readonly property var rain: settings
 
-  readonly property bool backgroundOn: !!rain && rain.backgroundOn
-  readonly property bool screensaverOn: !!rain && rain.config.screensaver
-  readonly property bool lockOn: !!rain && rain.config.lockScreen
+  // The service's `status`, while the panel is open: what the settings
+  // alone can't tell (whether the rain tile is the selected background,
+  // Omarchy's own screensaver switch, the pace on battery).
+  property var serviceStatus: ({})
+
+  function refreshStatus() {
+    if (statusProc.running) statusProc.again = true
+    else statusProc.running = true
+  }
+
+  Process {
+    id: statusProc
+    property bool again: false
+    command: ["omarchy-shell", "matrixscreens", "status"]
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        try {
+          var parsed = JSON.parse(text)
+          if (parsed && typeof parsed === "object") root.serviceStatus = parsed
+        } catch (e) {
+          // The service isn't up yet; the next poll tries again.
+        }
+      }
+    }
+    onExited: if (again) {
+      again = false
+      running = true
+    }
+  }
+
+  Timer {
+    interval: 1000
+    repeat: true
+    running: root.opened
+    triggeredOnStart: true
+    onTriggered: root.refreshStatus()
+  }
+
+  // Background on/off goes through the service, which selects the tile.
+  property bool backgroundOverride: false
+  property bool backgroundOverrideOn: false
+  readonly property bool backgroundOn: backgroundOverride ? backgroundOverrideOn : !!serviceStatus.backgroundOn
+  onServiceStatusChanged: if (backgroundOverride && !!serviceStatus.backgroundOn === backgroundOverrideOn) backgroundOverride = false
+
+  Timer {
+    id: backgroundOverrideTimeout
+    // Give up on the expected state if the service never reports it.
+    interval: 5000
+    onTriggered: root.backgroundOverride = false
+  }
+
+  function setBackgroundOn(on) {
+    backgroundOverrideOn = on
+    backgroundOverride = true
+    backgroundOverrideTimeout.restart()
+    Quickshell.execDetached(["omarchy-shell", "matrixscreens", "set", "background", on ? "on" : "off"])
+  }
+
+  readonly property bool screensaverOn: !!rain.config.screensaver
+  readonly property bool lockOn: !!rain.config.lockScreen
   readonly property bool anyOn: backgroundOn || screensaverOn || lockOn
 
   readonly property color fg: bar ? bar.foreground : Color.foreground
@@ -38,8 +102,7 @@ Panel {
   readonly property bool customizing: editor.anyOpen
 
   function activate(name) {
-    if (!rain) return
-    if (name === "background") rain.setBackgroundOn(!backgroundOn)
+    if (name === "background") setBackgroundOn(!backgroundOn)
     else if (name === "screensaver") rain.setSetting("screensaver", !screensaverOn)
     else if (name === "lock") rain.setSetting("lock_screen", !lockOn)
     else if (name === "text") editor.textOpen = !editor.textOpen
@@ -47,20 +110,17 @@ Panel {
   }
 
   function startScreensaver() {
-    if (!rain) return
     root.close()
     // Let the panel close first, so it isn't under the screensaver.
     startTimer.restart()
   }
 
   function editColors() {
-    if (!rain) return
     root.close()
     Quickshell.execDetached(["bash", "-c", "f=$(\"$1\" customize) && omarchy-launch-editor \"$f\"", "matrix-screens", rain.cli])
   }
 
   function paletteLabel() {
-    if (!rain) return ""
     var source = rain.paletteSource
     var name = rain.themeName
     return name + (source === "custom" ? " · your colors" : " · theme colors")
@@ -69,7 +129,7 @@ Panel {
   Timer {
     id: startTimer
     interval: 400
-    onTriggered: if (root.rain) root.rain.startScreensaver(false)
+    onTriggered: Quickshell.execDetached(["omarchy-shell", "matrixscreens", "screensaver"])
   }
 
   onOpenedChanged: {
@@ -83,11 +143,12 @@ Panel {
     }
   }
 
-  // `matrix-screens colors` / `omarchy-shell matrixscreens colors`.
-  Connections {
-    target: root.rain
-    ignoreUnknownSignals: true
-    function onCustomizeRequested() {
+  // `matrix-screens colors` / `omarchy-shell matrixscreens colors`: the
+  // service passes it on here.
+  IpcHandler {
+    target: "matrixscreens-panel"
+
+    function customize(): void {
       editor.paletteOpen = true
       root.open()
     }
@@ -173,7 +234,7 @@ Panel {
             id: preview
             width: parent.width
             height: Math.round(width * 9 / 16)
-            color: root.customizing ? editor.draft.background : (root.rain ? root.rain.backgroundColor : "black")
+            color: root.customizing ? editor.draft.background : root.rain.backgroundColor
             radius: Style.cornerRadius
             clip: true
             border.width: 1
@@ -182,7 +243,7 @@ Panel {
             Loader {
               anchors.fill: parent
               anchors.margins: 1
-              active: root.opened && !!root.rain
+              active: root.opened
               sourceComponent: Component {
                 // While customizing, the unsaved draft's colors.
                 RainView {
@@ -256,7 +317,7 @@ Panel {
           width: parent.width
           label: "Screensaver"
           description: !root.screensaverOn ? "Omarchy's screensaver runs when idle"
-            : (root.rain && root.rain.screensaverToggledOff ? "On, but Omarchy's screensaver switch is off" : "Rain when the computer is idle")
+            : (root.serviceStatus.screensaverToggledOff ? "On, but Omarchy's screensaver switch is off" : "Rain when the computer is idle")
           checked: root.screensaverOn
           hasCursor: root.cursor === 1
           foreground: root.fg

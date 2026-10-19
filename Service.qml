@@ -23,8 +23,8 @@ Item {
   property var manifest: null
   property string omarchyPath: ""
 
-  // The background, screensaver and lock-screen rain. The bar widget and
-  // the lock view use it through this property.
+  // The background, screensaver and lock-screen rain. The lock view uses it
+  // through this property; the bar widget can't reach it (Panel.qml).
   readonly property var rain: rainService
 
   Rain {

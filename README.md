@@ -132,7 +132,7 @@ If a rain tile was your background, pick another one. Disabling the plugin leave
 
 ## How it works
 
-`cmatrix.js` is a line-for-line port of cmatrix's main loop. `MatrixScreen.qml` keeps each character cell as a small square in a texture and a fragment shader draws the glyphs on the GPU; `RainView.qml` binds it to the settings. `Service.qml` is the lock screen and hosts `Rain.qml`, which runs the background (bottom layer), the screensaver (overlay layer), the tiles and the IPC. `Panel.qml` is the bar icon, and `ColorEditor.qml` (with `colors.js`) is the Customize sections. `bin/matrix-screens` is the command line and draws the tiles.
+`cmatrix.js` is a line-for-line port of cmatrix's main loop. `MatrixScreen.qml` keeps each character cell as a small square in a texture and a fragment shader draws the glyphs on the GPU; `RainView.qml` binds it to the settings. `Service.qml` is the lock screen and hosts `Rain.qml`, which runs the background (bottom layer), the screensaver (overlay layer), the tiles and the IPC. `RainSettings.qml` reads `settings.json` and the theme's colors (`ThemeSource.qml`). `Panel.qml` is the bar icon. Omarchy keeps lock services out of reach of other plugin code, so the panel keeps its own `RainSettings` and talks to the service only over IPC. `ColorEditor.qml` (with `colors.js`) is the Customize sections. `bin/matrix-screens` is the command line and draws the tiles.
 
 For the screensaver, the plugin starts the rain when Omarchy's idle service begins the screensaver, and runs a marker process that Omarchy's launcher sees as "already running". Activity ends the idle cycle and closes the rain.
 
