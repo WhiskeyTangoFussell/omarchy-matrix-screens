@@ -386,6 +386,23 @@ Item {
     onTriggered: if (!cursorProbe.running) cursorProbe.running = true
   }
 
+  // Pointer input that leaves the cursor where it was (a trackpad touch, a
+  // trackpoint nudge while the cursor is hidden) never shows up in the poll
+  // above. The compositor's idle notification sees every device, so once
+  // armed, going idle and then active again closes the screensaver too.
+  IdleMonitor {
+    id: inputMonitor
+    enabled: root.screensaverShowing && !armTimer.running && root.config.screensaverDismissOnMouse
+    timeout: 1
+    respectInhibitors: false
+    property bool sawIdle: false
+    onEnabledChanged: sawIdle = false
+    onIsIdleChanged: {
+      if (isIdle) sawIdle = true
+      else if (sawIdle && enabled) root.stopScreensaver()
+    }
+  }
+
   Process {
     id: cursorProbe
     command: ["hyprctl", "cursorpos"]
